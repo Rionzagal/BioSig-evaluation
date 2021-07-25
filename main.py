@@ -1,3 +1,4 @@
+from matplotlib.pyplot import xlabel, ylabel
+from numpy.core.defchararray import title
 from INeuron_class import *
-
-neuron = Izhikevich_neuron(v0=-70)
+from libs import *

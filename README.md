@@ -5,10 +5,11 @@ This algorithm focus on the generation of a neural network model based on the Iz
 ![Hodkin & Huxley voltage observation from a squid's giant axon](images/HnH_experiment.PNG)
 
 The ionic current model obtained from their investigation is presented as follows.
-
-$$E = mc^2$$
+![Hodkin & Huxley Current response equation](images/HnH_equation.PNG)
 
 ![Hodkin & Huxley voltage response obtained from the ODE model](images/HnH_result.PNG)
+
+![Tonic Spiking response obtained from the INeuron model](images/TS_sample.png)
 
 # Project tasks
 - [x] Store all of the neuron classes of the Izhikevich model in order to provide the right parameters.

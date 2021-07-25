@@ -1,11 +1,10 @@
+from libs import *
 import numpy as np
 import pandas as pd
-
-def find_peaks(VV):
-    pass
+from scipy.signal import find_peaks
 
 class Izhikevich_neuron(object):
-    def __init__(self, v0, type='TS', excitatory=True, tau=0.25, values_path='./n_values.csv'):
+    def __init__(self, v0, type='TS', excitatory=True, awn=1, tau=0.025, values_path='./n_values.csv'):
         """
         Izhikevich neuron model generation.
         v0 [signed real number]: Determines the initial standby voltage value.
@@ -44,30 +43,55 @@ class Izhikevich_neuron(object):
         self.excitatory = excitatory
         self.tau = tau
         self.I_out = 0
+        self.awn = awn
         #Neuron type parameters storing
         values_matrix = pd.read_csv(values_path)
         mask = type == values_matrix['abreviation']
         correct_values = values_matrix[mask]
         self.values = correct_values.drop(columns=['abreviation', 'full name'])
-        self.type = correct_values['full name']
+        self.values.reset_index(drop=True, inplace=True)
+        self.type = correct_values['full name'][0]
 
-    def forward(self, T, I_in=0):
+    def activate(self, T, I_in=0):
         V = self.v0
-        u = self.values['b']*V
+        u = self.values['b'][0]*V
+
         tspan = np.arange(start=0, stop=T, step=self.tau, dtype=float)
-        VV = np.array()
-        uu = np.array()
+        VV = []
+        uu = []
 
         for t in tspan:
             V += self.tau*(0.04*(V**2) + 5*V + 140 - u + I_in)
-            u += self.tau*self.values['a']*(self.values['b']*V - u)
+            u += self.tau*self.values['a'][0]*(self.values['b'][0]*V - u)
 
             if 30 <= V:
                 VV.append(30)
-                V = self.values['c']
-                u += self.values['d']
+                V = self.values['c'][0]
+                u += self.values['d'][0]
             else:
-                VV.append(V + np.random.randn())
+                VV.append(V + self.awn*np.random.randn())
             uu.append(u)
         
-        return VV
+        peaks, _ = find_peaks(VV, height=20)
+        
+        return np.array(VV), peaks.size
+
+##Main function used for testing##
+def main(T=100):
+    neuron = Izhikevich_neuron(v0=-70, type='TS')
+
+    response, peaks = neuron.activate(T=T, I_in=14)
+    s_time = np.linspace(0, T/1000, num=int(T/neuron.tau))
+    print(peaks)
+
+    plt.figure()
+    plt.plot(s_time, response)
+    plt.title(f"Single {neuron.type} Neuron Voltage Response")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Voltage [mV]")
+
+    plt.show()
+
+if __name__ == "__main__":
+    #Testing of the main function
+    main()
