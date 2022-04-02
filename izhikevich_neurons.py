@@ -1,4 +1,4 @@
-from libs import *
+from matplotlib import pyplot as plt
 from enum import Enum, auto
 from numpy import arange, array, linspace, random
 from pandas import DataFrame, read_csv
@@ -6,7 +6,7 @@ from scipy.signal import find_peaks
 from dataclasses import dataclass, field
 
 class NeuronType(Enum):
-    """The Izhikevich neuron types provided to each neuron"""
+    """The Izhikevich neuron types provided for each neuron"""
     Tonic_Spiking = auto()
     Phasic_Spiking = auto()
     Tonic_Bursting = auto()
@@ -88,7 +88,7 @@ class Izhikevich_neuron(object):
         excitatory_message : str = "Excitatory"
         if not self.is_excitatory:
             excitatory_message = "Inhibitory"
-        return f"Izhikevich neuron instance. Type: {self._type.name}, Activity: {excitatory_message}, Initial voltage: {self.v0}mV"
+        return f"Izhikevich neuron. Type: {self._type.name}, Activity: {excitatory_message}, Initial voltage: {self.v0}mV"
 
     def activate(self, T : float | int, I_in : float | int=0) -> tuple[array, int]:
         """Estimate the voltage response in mV over a given time-period in miliseconds [T] and an input current in nano Ampers [I_in]"""
@@ -120,7 +120,7 @@ def main():
     test_type : NeuronType = NeuronType.Tonic_Spiking
 
     neuron = Izhikevich_neuron(v0=-70, _type=test_type)
-    print(neuron)
+    print(f"New Izhikevich neuron instance created!\n{neuron}")
 
     try: 
         T = int(input("How many miliseconds should be simulated?\nThe default value is 100 ms.\n"))
