@@ -28,7 +28,9 @@ In order to successfuly use this module, a number of dependencies are needed. Th
 - [x] Generate a data class for the Izhikevich neural model, including its attributes and behaviors.
 - [ ] Generate a random network algorithm to represent the connection between each of the neurons presented in a desired time period.
 - [ ] Generate a visualization algorithm to represent the neural field response and the neural events for the evaluation time.
+- [ ] Search for real-world models approximation networks for sumulating a region of the human brain.
 - [ ] Generate an evaluation algorithm to calculate the field response rythm as an EEG channel response.
+- [ ] Generate a polar statistics algorithm to evaluate the simulated EEG rythm of the channel response.
 
 [Hodkin & Huxley experiment]: images/HnH_experiment.PNG "Hodkin and Huxley experiment in squid ginant axon"
 [HnH ODE]: images/HnH_equation.PNG "Hodking and Huxley ionic current ODE model"
