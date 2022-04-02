@@ -128,11 +128,11 @@ def main():
         print("The input value is not valid! We will proceed with the default value.\n")
 
     response, peaks = neuron.activate(T=T, I_in=14)
-    s_time = linspace(0, T/1000, num=int(T/neuron.tau))
+    simulation_time = linspace(0, T/1000, num=int(T/neuron.tau))
     print(f"The neuron activated {peaks} times in {T} miliseconds!")
 
     plt.figure()
-    plt.plot(s_time, response)
+    plt.plot(simulation_time, response)
     plt.title(f"Single {neuron._type.name} Neuron Voltage Response")
     plt.xlabel("Time [s]")
     plt.ylabel("Voltage [mV]")
