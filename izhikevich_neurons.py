@@ -1,33 +1,11 @@
+from re import I
+import uu
 from matplotlib import pyplot as plt
-from enum import Enum, auto
-from numpy import arange, array, linspace, random
+from numpy import arange, array, dtype, linspace, ndarray, random
 from pandas import DataFrame, read_csv
 from scipy.signal import find_peaks
 from dataclasses import dataclass, field
-
-class NeuronType(Enum):
-    """The Izhikevich neuron types provided for each neuron"""
-    Tonic_Spiking = auto()
-    Phasic_Spiking = auto()
-    Tonic_Bursting = auto()
-    Phasic_Bursting = auto()
-    Mixed_Mode = auto()
-    Spike_Frequency_Adaptation = auto()
-    Class_One_Excitability = auto()
-    Class_Two_Excitability = auto()
-    Spike_Latency = auto()
-    Subthreshold_Oscilation = auto()
-    Resonator = auto()
-    Integrator = auto()
-    Rebound_Spike = auto()
-    Rebound_Burst = auto()
-    Threshold_Variability = auto()
-    Bistability = auto()
-    DAP = auto()
-    Accomodation = auto()
-    Inhibition_Induced_Spiking = auto()
-    Inhibition_Induced_Bursting = auto()
-
+from neuron_types import NeuronType
 
 @dataclass(kw_only=True)
 class Izhikevich_neuron(object):
@@ -65,8 +43,7 @@ class Izhikevich_neuron(object):
         !!! THIS CLASS ONLY ACCEPTS A CSV FILE FOR THE VALUES ASSIGNATION. MAKE SURE THE VALUES FILE IS REFERENCED !!!
         """
 
-    v0 : float | int = field(default=0.)
-    I_out : float | int = field(default=0., init=False)
+    v0 : float | int = field(default=-60.)
     is_excitatory : bool = field(default=True)
     average_white_noise : float = field(default=1., repr=False)
     tau : float = field(default=0.025, repr=False)
@@ -75,8 +52,8 @@ class Izhikevich_neuron(object):
     _values : DataFrame = field(init=False, repr=False)
 
     def __post_init__(self) -> None :
-        if 0. > self.tau:
-            raise ValueError("The tau attribute must NOT contain negative values!")
+        if 0. >= self.tau:
+            raise ValueError("The tau attribute must NOT contain values equal or lesser than 0!")
 
         values_matrix : DataFrame = read_csv(self._path)
         mask : bool = NeuronType(self._type).name == values_matrix['full name']
@@ -88,31 +65,36 @@ class Izhikevich_neuron(object):
         excitatory_message : str = "Excitatory"
         if not self.is_excitatory:
             excitatory_message = "Inhibitory"
-        return f"Izhikevich neuron. Type: {self._type.name}, Activity: {excitatory_message}, Initial voltage: {self.v0}mV"
+        return f"Izhikevich neuron. Type: {self._type.name}, Activity: {excitatory_message}, Initial voltage: {self.v0} mV"
 
-    def activate(self, T : float | int, I_in : float | int=0) -> tuple[array, int]:
-        """Estimate the voltage response in mV over a given time-period in miliseconds [T] and an input current in nano Ampers [I_in]"""
-        V = self.v0
-        u = self._values['b'][0]*V
+    def calculate_step(self, V : int | float, u : int | float, I_in : int | float) -> tuple[float, float] :
+        if 30 <= V :
+            V = self._values['c'][0]
+            u += self._values['d'][0]
 
-        tspan : array[float] = arange(start=0, stop=T, step=self.tau, dtype=float)
-        VV : list[float] = list()
-        uu : list[float] = list()
+        V += self.tau*(0.04*(V**2) + 5*V + 140 - u + I_in)
+        u += self.tau*self._values['a'][0]*(self._values['b'][0]*V - u)
 
-        for t in tspan:
-            V += self.tau*(0.04*(V**2) + 5*V + 140 - u + I_in)
-            u += self.tau*self._values['a'][0]*(self._values['b'][0]*V - u)
-
-            if 30 <= V:
-                VV.append(30)
-                V = self._values['c'][0]
-                u += self._values['d'][0]
-            else:
-                VV.append(V + self.average_white_noise*random.randn())
-            uu.append(u)
+        if 30 <= V:
+            V = 30
+        else:
+            V += self.average_white_noise*random.randn()
         
-        peaks, _ = find_peaks(VV, height=20)
-        return array(VV), peaks.size
+        return (V, u)
+
+    def activate(self, T : float | int, I_in : float | int=0) -> tuple[ndarray, ndarray]:
+        """Estimate the voltage response in mV over a given time-period in miliseconds [T] and an input current in nano Ampers [I_in]"""
+        tspan : ndarray = linspace(0, T/1000, num=int(T/self.tau))
+        vv : list[float] = list()
+        v : float = self.v0
+        u : float = self.v0*self._values['b'][0]
+
+        for t in tspan :
+            vv.append(v)
+            v, u = self.calculate_step(v, u, I_in + random.random())
+        
+        peaks, _ = find_peaks(vv, height=20)
+        return array(vv), peaks*self.tau
 
 ##Main function used for testing##
 def main():
@@ -129,16 +111,22 @@ def main():
 
     response, peaks = neuron.activate(T=T, I_in=14)
     simulation_time = linspace(0, T/1000, num=int(T/neuron.tau))
-    print(f"The neuron activated {peaks} times in {T} miliseconds!")
+    print(f"The neuron activated {len(peaks)} times in {T} miliseconds!")
 
     plt.figure()
     plt.plot(simulation_time, response)
-    plt.title(f"Single {neuron._type.name} Neuron Voltage Response")
+    plt.title(f"single {neuron._type.name} Neuron Voltage Response")
     plt.xlabel("Time [s]")
     plt.ylabel("Voltage [mV]")
 
+    plt.figure()
+    plt.eventplot(peaks)
+    plt.title(f"single {neuron._type.name} firing response")
+    plt.ylabel("Neuron")
+    plt.xlabel("time [ms]")
+    
     plt.show()
-
+    
 if __name__ == "__main__":
     #Testing of the main function
     main()
