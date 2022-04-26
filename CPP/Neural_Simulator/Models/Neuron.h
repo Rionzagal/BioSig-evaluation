@@ -35,6 +35,10 @@ private: // Private non-static variables
     float a, b, c, d;
 
 public: // Public static variables
-    static float tau; //Time constant determined for response step
+    static float m_tau; //Time constant determined for response step
     const char* m_Path = "n_values.csv"; //The value path that will provide the behavior values for the neuron
+
+public:
+    void CalculateStep(float& V, float& u, float Iin);
+    void ActivateInPeriod(const int Tms, float Iin = 0);
 };

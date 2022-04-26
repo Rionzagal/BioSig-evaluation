@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 from neuron_types import NeuronType
 
 @dataclass(kw_only=True)
-class Izhikevich_neuron(object):
+class Neuron(object):
     """
         Izhikevich neuron model generation.
         v0 [mV]: Determines the initial standby voltage value.
@@ -48,7 +48,7 @@ class Izhikevich_neuron(object):
     average_white_noise : float = field(default=1., repr=False)
     tau : float = field(default=0.025, repr=False)
     _type : NeuronType = field(default=NeuronType.Tonic_Spiking)
-    _path : str = field(default="./n_values.csv", repr=False)
+    _path : str = field(default="./PYTHON/n_values.csv", repr=False)
     _values : DataFrame = field(init=False, repr=False)
 
     def __post_init__(self) -> None :
@@ -65,7 +65,7 @@ class Izhikevich_neuron(object):
         excitatory_message : str = "Excitatory"
         if not self.is_excitatory:
             excitatory_message = "Inhibitory"
-        return f"Izhikevich neuron. Type: {self._type.name}, Activity: {excitatory_message}, Initial voltage: {self.v0} mV"
+        return f"Izhikevich neuron -> Type: {self._type.name}, Activity: {excitatory_message}, Initial voltage: {self.v0} mV"
 
     def calculate_step(self, V : int | float, u : int | float, I_in : int | float) -> tuple[float, float] :
         if 30 <= V :
@@ -101,7 +101,7 @@ def main():
     T : int = 100
     test_type : NeuronType = NeuronType.Tonic_Spiking
 
-    neuron = Izhikevich_neuron(v0=-70, _type=test_type)
+    neuron = Neuron(v0=-70, _type=test_type)
     print(f"New Izhikevich neuron instance created!\n{neuron}")
 
     try: 
