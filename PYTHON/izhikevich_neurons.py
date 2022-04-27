@@ -1,7 +1,6 @@
-from re import I
-import uu
+from typing import ClassVar
 from matplotlib import pyplot as plt
-from numpy import arange, array, dtype, linspace, ndarray, random
+from numpy import array, linspace, ndarray, random
 from pandas import DataFrame, read_csv
 from scipy.signal import find_peaks
 from dataclasses import dataclass, field
@@ -43,18 +42,16 @@ class Izhikevich_neuron(object):
         !!! THIS CLASS ONLY ACCEPTS A CSV FILE FOR THE VALUES ASSIGNATION. MAKE SURE THE VALUES FILE IS REFERENCED !!!
         """
 
+    tau : ClassVar[float] = 0.025
+
     v0 : float | int = field(default=-60.)
     is_excitatory : bool = field(default=True)
     average_white_noise : float = field(default=1., repr=False)
-    tau : float = field(default=0.025, repr=False)
     _type : NeuronType = field(default=NeuronType.Tonic_Spiking)
-    _path : str = field(default="./n_values.csv", repr=False)
+    _path : str = field(default="./PYTHON/n_values.csv", repr=False)
     _values : DataFrame = field(init=False, repr=False)
 
     def __post_init__(self) -> None :
-        if 0. >= self.tau:
-            raise ValueError("The tau attribute must NOT contain values equal or lesser than 0!")
-
         values_matrix : DataFrame = read_csv(self._path)
         mask : bool = NeuronType(self._type).name == values_matrix['full name']
         correct_values : DataFrame = values_matrix[mask]
@@ -106,6 +103,7 @@ def main():
 
     try: 
         T = int(input("How many miliseconds should be simulated?\nThe default value is 100 ms.\n"))
+        
     except ValueError:
         print("The input value is not valid! We will proceed with the default value.\n")
 

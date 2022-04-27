@@ -24,8 +24,6 @@ In order to successfuly use this module, a number of dependencies are needed. Th
 - Numpy
 
 # Project tasks
-- [x] Store all of the neuron classes of the Izhikevich model in a separate .csv file along with its values in order to provide the right parameters to the neuron instance depending on the type.
-- [x] Generate a data class for the Izhikevich neural model, including its attributes and behaviors.
 - [ ] Generate a random network algorithm to represent the connection between each of the neurons presented in a desired time period.
 - [ ] Generate a visualization algorithm to represent the neural field response and the neural events for the evaluation time.
 - [ ] Search for real-world models approximation networks for sumulating a region of the human brain.

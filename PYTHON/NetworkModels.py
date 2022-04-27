@@ -83,15 +83,12 @@ class IzhNetwork(object) :
         if 0. >= self.global_tau :
             raise ValueError("The parameter gloabal_tau has an invalid value. Make sure that this value is greater than 0!")
         if 0. >= self.excitation_cap or 0. >= self.inhibition_cap :
-            raise ValueError("The excitation and inhibition capts must have positive, greater tha 0 values!")
+            raise ValueError("The excitation and inhibition caps must have positive, greater tha 0 values!")
         if 0. >= self.excitation_input or 0. >=self.inhibition_input :
             raise ValueError("The excitation and inhibition inputs must have positive, greater than 0 values!")
         
         if 0 < len(self.neurons) :
             self.total_neurons = len(self.neurons)
-
-            for n in self.neurons :
-                n.tau = self.global_tau #global tau adaptation for each neuron in the network
             
             self.generate_weight_matrix(labels=self._labels)
     
