@@ -4,7 +4,7 @@ from matplotlib.pyplot import eventplot, axes, Axes, figure, plot, show, title, 
 from numpy import arange, asarray, linspace, ndarray, random, array, where
 from pandas import DataFrame
 from dataclasses import dataclass, field
-from izhikevich_neurons import Izhikevich_neuron
+from izhikevich_neurons import Neuron
 
 @dataclass(kw_only=True)
 class IzhNetwork(object) :
@@ -12,7 +12,7 @@ class IzhNetwork(object) :
 
     global_tau : float = field(default=0.025, repr=False)
     total_neurons : int = field(default=0, init=False)
-    neurons : list[Izhikevich_neuron] = field(default_factory=list, repr=False)
+    neurons : list[Neuron] = field(default_factory=list, repr=False)
     excitation_cap : int | float = field(default=1, repr=False)
     inhibition_cap : int | float = field(default=1, repr=False)
     excitation_input : int | float = field(default=1, repr=False)
@@ -63,7 +63,7 @@ class IzhNetwork(object) :
         v_field : list[float] = list() #field voltage response (sum of all neuron voltages)
 
         #trigger parameters and responses
-        trigger_neuron : Izhikevich_neuron = Izhikevich_neuron(tau=self.global_tau, is_excitatory=True)
+        trigger_neuron : Neuron = Neuron(tau=self.global_tau, is_excitatory=True)
         _, trigger_peaks = trigger_neuron.activate(T=trigger_duration, I_in=I_in)
         I_net[trigger_pos] = trigger_peaks.size * trigger_cap
 
@@ -101,12 +101,12 @@ class IzhNetwork(object) :
 
 def main() :
     n_neurons : int = 10 #number of test neurons in the program
-    test_neurons : list[Izhikevich_neuron] = list()
+    test_neurons : list[Neuron] = list()
 
     for i in range(n_neurons) :
         v0 = random.randint(low=-80, high=-50)
         exc_inh = random.randn() >= 0.1
-        test_neurons.append(Izhikevich_neuron(v0=v0, is_excitatory=exc_inh))
+        test_neurons.append(Neuron(v0=v0, is_excitatory=exc_inh))
     
     network : IzhNetwork = IzhNetwork(neurons=test_neurons)
     print(network)
@@ -133,13 +133,6 @@ def main() :
     title("Firings")
     xlabel("Time [seconds]")
     ylabel("Neuron")
-
-    # for label in network._labels :
-    #     figure()
-    #     title(f"{label} single response")
-    #     plot(t_span, neuron_voltage[label])
-    #     xlabel("Time [seconds]")
-    #     ylabel("Voltage [mV]")
 
     show()
 
