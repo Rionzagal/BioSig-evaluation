@@ -2,7 +2,7 @@ from matplotlib.pyplot import eventplot, axes, Axes, figure, plot, show, title, 
 from numpy import arange, asarray, linspace, ndarray, random, array, number, zeros
 from pandas import DataFrame
 from dataclasses import dataclass, field
-from PYTHON.neuron_types import NeuronType
+from neuron_types import NeuronType
 from izhikevich_neurons import Neuron
 
 @dataclass(kw_only=True)
