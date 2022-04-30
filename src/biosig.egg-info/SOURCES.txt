@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+setup.py
+src/biosig.egg-info/PKG-INFO
+src/biosig.egg-info/SOURCES.txt
+src/biosig.egg-info/dependency_links.txt
+src/biosig.egg-info/not-zip-safe
+src/biosig.egg-info/requires.txt
+src/biosig.egg-info/top_level.txt
