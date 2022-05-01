@@ -2,4 +2,5 @@
 /.vscode
 /venv
 
-.egg-info
+/src/biosig.egg-info
+/.mypy_cache
