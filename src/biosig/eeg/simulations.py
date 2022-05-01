@@ -9,7 +9,7 @@ from scipy.signal import find_peaks
 class NeuronType:
     """The Izhikevich neuron types provided for each neuron"""
 
-    TONIC_SPIKING: ClassVar[dict[str ]] = {"Name" : "Tonic Spiking",                   "a" : 0.02,     "b" : 0.2,  "c" : -65,  "d" : 6     }
+    TONIC_SPIKING: ClassVar[dict[str ]] = {"Name": "Tonic Spiking", "a": 0.02, "b": 0.2, "c": -65, "d": 6}
     PHASIC_SPIKING: ClassVar[dict] = {"Name" : "Phasic Spiking",                  "a" : 0.02,     "b" : 0.25, "c" : -65,  "d" : 6     }
     TONIC_BURSTING: ClassVar[dict] = {"Name" : "Tonic Bursting",                  "a" : 0.02,     "b" : 0.2,  "c" : -50,  "d" : 2     }
     PHASIC_BURSTING: ClassVar[dict] = {"Name" : "Phasic Bursting",                 "a" : 0.02,     "b" : 0.2,  "c" : -55,  "d" : 0.05  }
