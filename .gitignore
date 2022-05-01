@@ -1,4 +1,6 @@
 /__pycache__
 /.vscode
-/.vs
-/CPP/.x64
+/venv
+
+/src/biosig.egg-info
+/.mypy_cache
