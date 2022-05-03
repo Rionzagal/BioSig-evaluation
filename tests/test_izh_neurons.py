@@ -2,18 +2,17 @@ from biosig.eeg.simulations import Network, Neuron, NeuronType
 from numpy import random, linspace
 from matplotlib import pyplot as plt
 
-n_neurons : int = 10 #number of test neurons in the program
-test_neurons : list[Neuron] = list()
+n_neurons: int = 10    #number of test neurons in the program
+test_neurons: list[Neuron] = list()
 
-for i in range(n_neurons) :
+for i in range(n_neurons):
     v0 = random.randint(low=-80, high=-50)
     exc_inh = random.randn() >= 0.1
     test_neurons.append(Neuron(v0=v0, is_excitatory=exc_inh))
 
-network : Network = Network(neurons=test_neurons)
+network: Network = Network(neurons=test_neurons)
 print(network)
 
-network.display_neurons()
 network.print_weights()
 
 T = 1000
