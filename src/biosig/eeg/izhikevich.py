@@ -213,23 +213,38 @@ class Neuron:
         return
 
     # INSTANCE METHODS
-    def set_from_neuron_type(self, input_type: dict[str, str | float]) -> None:
-        """Set the neuron type as the input_type recovered from the NeuronTypes class and retrieve the values the values' database"""
-        MANDATORY_KEYS = {"Name", "a", "b", "c", "d"}   # A set of mandatory keys that must be present in the input_type dictionary
-        neuron_types_instance = NeuronTypes()
-        NEURON_TYPES = vars(neuron_types_instance)
-        for ntype in NEURON_TYPES.values():
-            for key, value in dict(ntype).items():
-                if "Name" == key and not isinstance(value, str):
-                    raise ValueError()
-                elif not isinstance(value, float):
-                    raise ValueError()
+    def set_neuron_type(self, input_type: dict[str, str | float]) -> None:
+        """
+        Set the neuron type as one of the built-in neuron types in the NeuronTypes class.
+
+        Parameters:
+        input_type: dict[str, str | float], mandatory
+            Must be one of the built-in types of the NeuronTypes class.
+        """
+        if not bool(NeuronTypes.get_single(str(input_type["Name"]))):
+            raise ValueError("The selected input is not part of the NeuronTypes class.")
         self._type = input_type
         return
 
+    def set_custom_type(self, input_type: dict[str, str | float]) -> None:
+        """
+        Set a custom neuron type for the Neuron instance using an input value as a dictionary.
+
+        Parameters:
+        input_type: dict[str, str | float], mandatory
+            Must be structured using the keys {Name, a, b, c, d} with its respective values.
+            The value of 'Name' must be of type str, while the other values must be of type float.
+        """
+        MANDATORY_KEYS = {"Name", "a", "b", "c", "d"}
+        for key in input_type:
+            if key not in MANDATORY_KEYS:
+                raise ValueError("The custom type must contain the following keys: {Name, a, b, c, d}.")
+        self._type = {key: str(value) if "Name" == key else float(value) for key, value in input_type.items()}
+        return
+
     def get_type(self) -> tuple[str, dict[str, float]]:
-        """Return the neuron type by name and the neuron type values"""
-        return str(self._type["Name"]), {key: float(self._type[key]) for key in self._type if key != "Name"}
+        """Return the type of the neuron instance as a tuple containing the name and a dictionary with the type values."""
+        return str(self._type["Name"]), {key: float(value) for key, value in self._type.items() if key != "Name"}
 
     def calculate_step(self, V: int | float, u: int | float, I_in: int | float) -> tuple[float, float]:
         """The calculation of a single step of evaluation in the Neuron, given a voltage, a support and a current in nano Ampers. \n

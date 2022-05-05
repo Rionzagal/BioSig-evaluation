@@ -1,5 +1,6 @@
 /src/biosig/eeg/__pycache__
-src/*.egg-info
+/src/biosig/__pycache__
+/src/biosig.egg-info/*
 /tests/__pycache__
 
 /.vscode

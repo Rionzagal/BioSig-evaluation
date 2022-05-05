@@ -81,7 +81,7 @@ def test_tau_attribute(test_tau, test_period, expected_steps):
 def test_type_setting(test_type):
     """Test the bahavior of the type setter method of the Neuron model"""
     test_neuron: Neuron = Neuron()
-    test_neuron.set_type(test_type)
+    test_neuron.set_neuron_type(test_type)
     type_name, _ = test_neuron.get_type()
     assert str(test_type["Name"]) == type_name
     return
