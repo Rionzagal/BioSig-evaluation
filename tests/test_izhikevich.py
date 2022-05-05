@@ -1,6 +1,4 @@
 from biosig.eeg.izhikevich import Neuron, NeuronTypes
-from matplotlib import pyplot as plt
-from numpy import linspace
 import pytest
 
 @pytest.mark.parametrize("input_name,expected", [

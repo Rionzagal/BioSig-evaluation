@@ -12,4 +12,4 @@ src/biosig.egg-info/not-zip-safe
 src/biosig.egg-info/requires.txt
 src/biosig.egg-info/top_level.txt
 src/biosig/eeg/__init__.py
-src/biosig/eeg/simulations.py
+src/biosig/eeg/izhikevich.py

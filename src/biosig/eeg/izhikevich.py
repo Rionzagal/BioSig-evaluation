@@ -415,8 +415,7 @@ class Network:
         """Generate the default randomized values of the weights and count the total number of neurons in the network."""
         if 0. >= self.excitation_input or 0. >= self.inhibition_input:
             raise ValueError(
-                "The excitation and inhibition inputs must "
-                + "have positive, greater than 0 values!")
+                "The excitation and inhibition inputs must have positive, greater than 0 values!")
         if 0 < len(self.neurons):
             self._total_neurons = len(self.neurons)
             self.set_weights(labels=self._labels)
