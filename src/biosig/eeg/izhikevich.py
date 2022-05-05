@@ -1,4 +1,3 @@
-from curses import keyname
 from dataclasses import dataclass, field
 from typing import ClassVar
 from numpy import array, float16, random, zeros
@@ -8,7 +7,7 @@ from scipy.signal import find_peaks
 
 
 @dataclass(frozen=True)
-class NeuronType:
+class NeuronTypes:
     """The Izhikevich neuron types provided for each neuron"""
     TONIC_SPIKING: ClassVar[dict[str, str | float]] = {
         "Name": "Tonic Spiking",
@@ -167,14 +166,14 @@ class NeuronType:
     @classmethod
     def get_single(cls, name: str) -> dict[str, str | float]:
         """
-        Retrieve a single NeuronType value from the specified name.
+        Retrieve a single NeuronTypes value from the specified name.
         If the name does not match any of the names in the class, return an empty dict.
         """
-        result: dict[str, str | float] = {"Name": "", "a": 0., "b": 0., "c": 0., "d": 0.}
+        result: dict[str, str | float] = dict()
         cls_data = cls.__dict__
-        for data in cls_data.values:
+        for data in cls_data.values():
             try:
-                if name.lower() in str(data["Name"]).lower():
+                if name.lower() == str(data["Name"]).lower():
                     result = data
                     break
             except (TypeError, KeyError):
@@ -182,7 +181,7 @@ class NeuronType:
         return result
 
 
-@dataclass(kw_only=True)
+@dataclass()
 class Neuron:
     """
         Izhikevich neuron model generation.
@@ -199,7 +198,7 @@ class Neuron:
     v0: float | int = field(default=-60.)
     is_excitatory: bool = field(default=True)
     average_white_noise: float = field(default=1., repr=False)
-    _type: dict[str, str|float] = field(default_factory=dict, repr=False)
+    _type: dict[str, str | float] = field(default_factory=dict, repr=False)
 
     # CLASS METHODS
     @classmethod
@@ -214,20 +213,23 @@ class Neuron:
         return
 
     # INSTANCE METHODS
-    def set_type(self, input_type: dict[str, str | float]) -> None:
+    def set_from_neuron_type(self, input_type: dict[str, str | float]) -> None:
         """Set the neuron type as the input_type recovered from the NeuronTypes class and retrieve the values the values' database"""
         MANDATORY_KEYS = {"Name", "a", "b", "c", "d"}   # A set of mandatory keys that must be present in the input_type dictionary
-        for key, value in input_type.items():
-            if key not in MANDATORY_KEYS:   # Check for invalid keys in the custom input
-                raise ValueError("The custom input type must only contain the keys {'Name', 'a', 'b', 'c', 'd'} with its respective values.")
-            if ("Name" == key and not isinstance(value, str)) or (not isinstance(value, (float, int))):     # Check for invalid values in the custom input
-                raise TypeError("The value of 'Name' must be of type 'str', and the values of 'a', 'b', 'c', 'd' must be real numbers.")
+        neuron_types_instance = NeuronTypes()
+        NEURON_TYPES = vars(neuron_types_instance)
+        for ntype in NEURON_TYPES.values():
+            for key, value in dict(ntype).items():
+                if "Name" == key and not isinstance(value, str):
+                    raise ValueError()
+                elif not isinstance(value, float):
+                    raise ValueError()
         self._type = input_type
         return
 
     def get_type(self) -> tuple[str, dict[str, float]]:
         """Return the neuron type by name and the neuron type values"""
-        return str(self._type["Name"]), {self._type[key] for key in self._type if key != "Name"}
+        return str(self._type["Name"]), {key: float(self._type[key]) for key in self._type if key != "Name"}
 
     def calculate_step(self, V: int | float, u: int | float, I_in: int | float) -> tuple[float, float]:
         """The calculation of a single step of evaluation in the Neuron, given a voltage, a support and a current in nano Ampers. \n
@@ -241,10 +243,10 @@ class Neuron:
             u [float] -> The next supporting value iteration for the support Izhikevich equation
         """
         if 30 <= V:
-            V = self._type['c']
-            u += self._type['d']
+            V = float(self._type['c'])
+            u += float(self._type['d'])
         V += Neuron._tau * (0.04 * (V ** 2) + 5 * V + 140 - u + I_in)
-        u += Neuron._tau * self._type['a'] * (self._type['b'] * V - u)
+        u += Neuron._tau * float(self._type['a']) * (float(self._type['b']) * V - u)
         V = 30 if 30 <= V else V + self.average_white_noise * random.randn()
         return (V, u)
 
@@ -261,7 +263,7 @@ class Neuron:
         """
         vv: list[float] = list()
         v: float = self.v0
-        u: float = self.v0*self._type['b']
+        u: float = self.v0 * float(self._type['b'])
         for _ in range(int(T / Neuron._tau)):
             vv.append(v)
             v, u = self.calculate_step(v, u, I_in + random.random())
@@ -269,18 +271,20 @@ class Neuron:
         return array(vv, dtype=float16), array(peaks*Neuron._tau, dtype=float16)
 
     def __repr__(self) -> str:
+        """Return the basic parameters and behavior activity as a string."""
         excitatory_message: str = "Excitatory" if self.is_excitatory else "Inhibitory"
         return f"Izhikevich neuron -> Type: {self._type['Name']}, Activity: {excitatory_message}, Initial voltage: {self.v0} mV"
 
-    def __post_init__(self, n_type: dict[str, str | float] = NeuronType.TONIC_SPIKING) -> None:
-        self._type = n_type
+    def __post_init__(self) -> None:
+        """Set default values needed for the internal functions."""
+        if not bool(self._type):
+            self._type = NeuronTypes.TONIC_SPIKING
         return
 
 
-@dataclass(kw_only=True)
+@dataclass()
 class Network:
     """A model representing a model composed by multiple neurons with multiple weights"""
-
     neurons: list[Neuron] = field(default_factory=list, repr=False)
     excitation_input: int | float = field(default=1, repr=False)
     inhibition_input: int | float = field(default=1, repr=False)
@@ -319,8 +323,8 @@ class Network:
             raise ValueError("The list of labels must contain elements equal to the number of neurons in the network!")
         self._labels = labels
         conn_type: NDArray[float16] = array([[(random.random() > (1 - conn_rate))
-                                              for _ in range(self._total_neurons)]
-                                              for _ in range(self._total_neurons)], dtype=float16)
+                                            for _ in range(self._total_neurons)]
+                                            for _ in range(self._total_neurons)], dtype=float16)
         weight_type: NDArray[float16] = zeros(array(conn_type).shape, dtype=float16)
         for j in range(weight_type.shape[0]):
             for i in range(weight_type.shape[1]):
@@ -366,22 +370,18 @@ class Network:
             The input current applied to the trigger neuron generated for the network.
         trigger_pos : int, optional, default 0
             The neuron index in the network to which the trigger response is applied. Must be within the boundaries of the neurons list in the network"""
-
         # initial values and parameters
-        I_net: list[float] = [0. for x in range(self._total_neurons)]
+        I_net: list[float] = [0. for _ in range(self._total_neurons)]
         v: NDArray[float16] = array([n.v0 for n in self.neurons])    # initial values of 'v'
-        u: NDArray[float16] = array([n.v0 * n._type['b'] for n in self.neurons])    # initial values of 'u'
-
+        u: NDArray[float16] = array([n.v0 * float(n._type['b']) for n in self.neurons])    # initial values of 'u'
         # response values
         neuron_voltage: dict[str, list[int]] = {n_label: list() for n_label in self._labels}
         v_individual: dict[str, list[float]] = {n_label: list() for n_label in self._labels}
         v_field: list[float] = list()   # field voltage response (sum of all neuron voltages)
-
         # trigger parameters and responses
         trigger_neuron: Neuron = Neuron(is_excitatory=True)
         _, trigger_peaks = trigger_neuron.activate(T=trigger_duration, I_in=I_in)
         I_net[trigger_pos] = trigger_peaks.size * trigger_cap
-
         for _ in range(int(T / Neuron._tau)):
             v_field.append(sum(v))
             I_net = [self.excitation_input * random.randn() if n.is_excitatory else self.inhibition_input * random.randn() for n in self.neurons]
@@ -397,6 +397,7 @@ class Network:
                 DataFrame(neuron_voltage))
 
     def __post_init__(self) -> None:
+        """Generate the default randomized values of the weights and count the total number of neurons in the network."""
         if 0. >= self.excitation_input or 0. >= self.inhibition_input:
             raise ValueError(
                 "The excitation and inhibition inputs must "
@@ -406,6 +407,7 @@ class Network:
             self.set_weights(labels=self._labels)
 
     def __repr__(self) -> str:
+        """Present the Izhikevich network in the console with its total neurons."""
         message: str = f"""New Izhikevich network has been generated!
         Total neurons: {self._total_neurons}"""
         return message

@@ -1,5 +1,7 @@
 /src/biosig/eeg/__pycache__
+src/*.egg-info
 /tests/__pycache__
+
 /.vscode
 /venv
 
@@ -8,4 +10,3 @@
 /.tox
 
 .coverage
-
