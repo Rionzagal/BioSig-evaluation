@@ -1,3 +1,4 @@
+![Tests](https://github.com/Rionzagal/BioSig-evaluation/actions/workflows/tests.yml/badge.svg)
 # BioSig package for biological signals processing and simulation
 This module focuses on the simulation and specific processing of biological signals, such as EMG, EEG, and others.
 
