@@ -1,6 +1,13 @@
-/__pycache__
+src/biosig/eeg/__pycache__
+src/biosig/__pycache__
+src/biosig.egg-info
+tests/__pycache__
+
 /.vscode
 /venv
 
-/src/biosig.egg-info
 /.mypy_cache
+/.pytest_cache
+/.tox
+
+.coverage
