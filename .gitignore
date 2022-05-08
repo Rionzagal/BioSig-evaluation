@@ -1,5 +1,5 @@
 # cache files and byte-compiled files
-__pycache__/
+__pycache__
 *.py[cod]
 *$py.class
 
@@ -18,14 +18,14 @@ sdist/
 var/
 wheels/
 share/python-wheels/
-*.egg-info/
+*.egg-info
 .installed.cfg
 *.egg
 MANIFEST
 
 # environment and editor cache files
-/.vscode
-/venv
+.vscode
+venv
 
 # unit test and coverage files
 /.mypy_cache

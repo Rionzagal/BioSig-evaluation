@@ -359,7 +359,7 @@ class Network:
         if (isinstance(weight_matrix, list)):
             # Convert the weight matrix into a DataFrame if it is not
             weight_matrix = DataFrame(data=weight_matrix, index=labels, columns=labels)
-        if (weight_matrix.select_dtypes(exclude=['number']).any()):
+        if ((weight_matrix.select_dtypes(exclude=['number'])).any()).any():
             # Raise a ValueError exception if the weight_matrix contains any other than a number
             raise ValueError("Invalid datatype in matrix! The matrix must only contain numbers.")
         if (weight_matrix.shape != (self._total_neurons, self._total_neurons)):
@@ -369,11 +369,12 @@ class Network:
         self._weights = weight_matrix
         return self._weights
 
-    def print_weights(self):
+    def print_weights(self) -> None:
         """Prints the weight matrix of the network to the console."""
         print(f"Weights and connection matrix:\n{self._weights.to_string()}")
+        return
 
-    def run_in_period(self, T: int, I_in: float = 0, trigger_pos: int = 0, trigger_duration: int = 200,
+    def run(self, T: int, I_in: float = 0, trigger_pos: int = 0, trigger_duration: int = 200,
                       trigger_cap: int | float = 1) -> tuple[NDArray[float16], DataFrame, DataFrame]:
         """
         Activates the network for a given amount of time evaluated in miliseconds using a trigger neuron response voltage
@@ -385,40 +386,40 @@ class Network:
             The input current applied to the trigger neuron generated for the network.
         trigger_pos : int, optional, default 0
             The neuron index in the network to which the trigger response is applied. Must be within the boundaries of the neurons list in the network"""
-        # initial values and parameters
+        # Set the initial values for the run parameters.
         I_net: list[float] = [0. for _ in range(self._total_neurons)]
-        v: NDArray[float16] = array([n.v0 for n in self.neurons])    # initial values of 'v'
-        u: NDArray[float16] = array([n.v0 * float(n._type['b']) for n in self.neurons])    # initial values of 'u'
-        # response values
+        v: NDArray[float16] = array([n.v0 for n in self.neurons])
+        u: NDArray[float16] = array([n.v0 * float(n._type['b']) for n in self.neurons])
+        # Prepare the response data structures for the run.
         neuron_voltage: dict[str, list[int]] = {n_label: list() for n_label in self._labels}
         v_individual: dict[str, list[float]] = {n_label: list() for n_label in self._labels}
-        v_field: list[float] = list()   # field voltage response (sum of all neuron voltages)
-        # trigger parameters and responses
+        v_field: list[float] = list()   # Prepare an empty list of respones voltage values.
+        # Set a trigger neuron response run for the input current with an excitatory neuron.
         trigger_neuron: Neuron = Neuron(is_excitatory=True)
         _, trigger_peaks = trigger_neuron.activate(T=trigger_duration, I_in=I_in)
-        I_net[trigger_pos] = trigger_peaks.size * trigger_cap
+        I_net[trigger_pos] = trigger_peaks.size * trigger_cap  # Assign the trigger response current to the designated neuron in the network.
         for _ in range(int(T / Neuron._tau)):
             v_field.append(sum(v))
-            I_net = [self.excitation_input * random.randn() if n.is_excitatory else self.inhibition_input * random.randn() for n in self.neurons]
+            I_net = [
+                self.excitation_input * random.randn() if n.is_excitatory else self.inhibition_input * random.randn() for n in self.neurons
+                ]
             fired = [30 <= v[idx] for idx, _ in enumerate(v)]
             I_net = I_net + [sum(self._weights.to_numpy()[idx, :] * fired) for idx in range(self._total_neurons)]
             for n_idx, label in enumerate(self._labels):
                 current_neuron: Neuron = self.neurons[n_idx]
                 v_individual[label].append(v[n_idx])
-                v[n_idx], u[n_idx] = current_neuron.calculate_step(v[n_idx], u[n_idx],
-                                                                   I_net[n_idx])
+                v[n_idx], u[n_idx] = current_neuron.calculate_step(v[n_idx], u[n_idx], I_net[n_idx])
                 neuron_voltage[label].append(fired[n_idx])
-        return (array(v_field), DataFrame(v_individual),
-                DataFrame(neuron_voltage))
+        return (array(v_field), DataFrame(v_individual), DataFrame(neuron_voltage))
 
     def __post_init__(self) -> None:
         """Generate the default randomized values of the weights and count the total number of neurons in the network."""
         if 0. >= self.excitation_input or 0. >= self.inhibition_input:
-            raise ValueError(
-                "The excitation and inhibition inputs must have positive, greater than 0 values!")
+            raise ValueError("The excitation and inhibition inputs must have positive, greater than 0 values!")
         if 0 < len(self.neurons):
             self._total_neurons = len(self.neurons)
             self.set_weights(labels=self._labels)
+            return
 
     def __repr__(self) -> str:
         """Present the Izhikevich network in the console with its total neurons."""
