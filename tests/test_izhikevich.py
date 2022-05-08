@@ -1,5 +1,5 @@
 from pandas import DataFrame
-from biosig.eeg.izhikevich import Network, Neuron, NeuronTypes
+from medsignal.eeg.izhikevich import Network, Neuron, NeuronTypes
 from numpy import random
 import pytest
 
