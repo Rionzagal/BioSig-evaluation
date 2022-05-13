@@ -1,6 +1,6 @@
-![Tests](https://github.com/Rionzagal/MedSig/actions/workflows/tests.yml/badge.svg)
-![Issues](https://img.shields.io/github/issues/Rionzagal/MedSig)
-![License](https://img.shields.io/github/license/Rionzagal/MedSig)
+[![Tests](https://github.com/Rionzagal/MedSig/actions/workflows/tests.yml/badge.svg)](https://github.com/Rionzagal/MedSig/actions)
+[![Issues](https://img.shields.io/github/issues/Rionzagal/MedSig)](https://github.com/Rionzagal/MedSig/issues)
+[![License](https://img.shields.io/github/license/Rionzagal/MedSig)](./LICENSE)
 
 # MedSig package for biological signals processing and simulation
 This module focuses on the simulation and specific processing of biological signals, such as EMG, EEG, and others.
