@@ -31,4 +31,5 @@ venv
 /.mypy_cache
 /.pytest_cache
 /.tox
+*.html
 .coverage
