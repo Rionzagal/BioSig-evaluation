@@ -1,7 +1,6 @@
 from __future__ import annotations
 from collections.abc import Collection
 from dataclasses import dataclass, field
-from operator import index
 from string import ascii_letters, digits
 from random import choice as rand_choice
 from typing import ClassVar
@@ -104,7 +103,7 @@ class NeuronTypes:
             TypeError: When the data dictionary contains types different than specified in the
                 argument description above."""
         MANDATORY_KEYS = {"Name", "a", "b", "c", "d"}
-        MANDATORY_TYPES = {str, (float, int), (float, int), (float, int), (float, int)}
+        # MANDATORY_TYPES = {str, (float, int), (float, int), (float, int), (float, int)}
         incorrect_key: bool = len(MANDATORY_KEYS) != len(data)
         for ref_key, data_key in zip(MANDATORY_KEYS, data.keys()):
             if incorrect_key:
@@ -168,7 +167,7 @@ class NeuronTypes:
             "b": self.__b,
             "c": self.__c,
             "d": self.__d
-            }
+        }
 
     def __repr__(self) -> str:
         return f"""Neuron type of name: {self.Name} with properties
@@ -266,7 +265,7 @@ class Neuron:
             "Activity": "Excitatory" if self.__is_excitatory else "Inhibitory",
             "Time constant": self.tau(),
             "Added noise": self.average_white_noise
-            }
+        }
 
     def calculate_step(self, V: int | float, u: int | float, I_in: int | float) -> tuple[float, float]:
         """Calculate the next voltage step response for the current Neuron object.
@@ -357,11 +356,15 @@ class Network:
 
     def __random_label(self) -> str:
         """Generate a unique randomized label to fit the Network labels structure and the label collection of the Network."""
-        new_id = "".join(rand_choice(ascii_letters + digits) for _ in str(self.total_neurons))
-        for n_label in self.__neurons.keys():
-            n_id = (n_label.split('_'))[-1]
-            new_id = "".join(rand_choice(ascii_letters + digits) for _ in str(self.total_neurons)) if new_id != n_id else new_id
-        return "n_".join(new_id)
+        def gen_id() -> str:
+            num_digits = len(str(self.total_neurons + 1))
+            return "".join(rand_choice(ascii_letters + digits) for _ in range(num_digits))
+
+        new_id = gen_id()
+        if 0 < len(self.__neurons):
+            while f"n_{new_id}" in set(self.__neurons.keys()):
+                new_id = gen_id()
+        return f"n_{new_id}"
 
     @property
     def neurons(self) -> dict[str, Neuron]:
@@ -388,15 +391,16 @@ class Network:
         return self.__weights
 
     @weights.setter
-    def weights(self, weights: DataFrame | list[list[float]] | NDArray[float16]) -> None:
-        if isinstance(weights, list) or weights is NDArray:
-            weights = DataFrame(type=weights, index=self.labels, columns=self.labels)
+    def weights(self, weights: DataFrame) -> None:
+        if not isinstance(weights, DataFrame):
+            raise TypeError("Invalid matrix type! The weigths matrix must be set as a pandas DataFrame.")
         if ((weights.select_dtypes(exclude=['number'])).any()).any():
-            raise ValueError("Invalid typetype in matrix! The matrix must only contain numbers.")
+            raise ValueError("Invalid datatype found in the matrix! The matrix must only contain numbers.")
         if (weights.shape != (self.total_neurons, self.total_neurons)):
-            raise ValueError("Invalid input! The dimensions of the input weights must be square and"
+            raise ValueError("Invalid input! The dimensions of the input weights must be square and "
                              + "equal to the total number of neurons of the network.")
-        self.__weights = weights
+        labels = set(self.neurons.keys())
+        self.__weights = DataFrame(weights.to_numpy(), index=labels, columns=labels)
         return
 
     @property
@@ -408,7 +412,7 @@ class Network:
     def thalamic_ex(self, value: float) -> None:
         if 0. >= value:
             raise ValueError("The excitation input value must be a positive number greater than 0!")
-        self.__exc_inp = value
+        self.__exc_inp = float(value)
         return
 
     @property
@@ -420,7 +424,7 @@ class Network:
     def thalamic_in(self, value: float) -> None:
         if 0. >= value:
             raise ValueError("The inhibition input value must be a positive number greater than 0!")
-        self.__exc_inp = value
+        self.__exc_inp = float(value)
         return
 
     def add_neurons(self, data: Neuron | dict[str, Neuron] | Collection[Neuron], labels: str | set[str] | None = None) -> None:
@@ -511,7 +515,7 @@ class Network:
                 if conn_type[j, i] and index_labels[j] != index_labels[i]:
                     weight_type[j, i] = (exc_cap if index_neurons[i].is_excitatory else -inh_cap) * random.random()
         self.__weights = DataFrame(weight_type, index=index_labels, columns=index_labels)
-        return self.__weights
+        return self.weights
 
     def activate(self, T: int, I_in: float = 0, trigger_pos: int = 0, trigger_duration: int = 200,
                  trigger_cap: int | float = 1) -> tuple[NDArray[float16], DataFrame, DataFrame]:
@@ -537,12 +541,12 @@ class Network:
                 neuron_firings(DataFrame): A DataFrame containing the individual firings for each of the neurons evaluated in the
                     Network over the given time-period."""
         # Set the initial values for the run parameters.
-        I_net: list[float] = [0. for _ in range(self._total_neurons)]
+        I_net: list[float] = [0. for _ in range(self.total_neurons)]
         v: NDArray[float16] = array([n.v0 for n in self.__neurons.values()])
         u: NDArray[float16] = array([n.v0 * float(n.neuron_type.b) for n in self.__neurons.values()])
         # Prepare the response type structures for the run.
-        neuron_firings: dict[str, list[int]] = {n_label: list() for n_label in self.labels}
-        v_individual: dict[str, list[float]] = {n_label: list() for n_label in self.labels}
+        neuron_firings: dict[str, list[int]] = {n_label: list() for n_label in set(self.neurons.keys())}
+        v_individual: dict[str, list[float]] = {n_label: list() for n_label in set(self.neurons.keys())}
         v_field: list[float] = list()   # Prepare an empty list of respones voltage values.
         # Set a trigger neuron response run for the input current with an excitatory neuron.
         trigger_neuron: Neuron = Neuron()
@@ -552,7 +556,7 @@ class Network:
             v_field.append(sum(v))
             I_net = [
                 self.__exc_inp * random.randn() if n.is_excitatory else self.__inh_inp * random.randn() for n in self.neurons.values()
-                ]
+            ]
             fired = [30 <= v[idx] for idx, _ in enumerate(v)]
             I_net = I_net + [sum(self.weights.to_numpy()[idx, :] * fired) for idx in range(self.total_neurons)]
             for n_idx, (label, neuron) in enumerate(self.__neurons.items()):
@@ -567,33 +571,30 @@ class Network:
             labels: set[str] | list[str] | None = None,
             weights: DataFrame | None = None,
             exc_inp: float | None = None, inh_inp: float | None = None
-            ) -> None:
+    ) -> None:
         self.thalamic_ex = exc_inp if exc_inp else self.__exc_inp
         self.thalamic_in = inh_inp if inh_inp else self.__exc_inp
-        if isinstance(neurons, dict):
-            self.__neurons = neurons if neurons else self.__neurons
-        elif isinstance(neurons, list):
-            self.__neurons = dict()
-            if labels:
-                if len(labels) != len(neurons):
-                    raise ValueError("The length of labels and neurons does not match!")
+        if neurons:
+            print(f"The input length is {len(neurons)}")
+            if isinstance(neurons, dict):
+                self.__neurons = neurons if neurons else self.__neurons
+            elif isinstance(neurons, list):
+                self.__neurons = dict()
+                if labels:
+                    if len(labels) > len(set(labels)):
+                        raise ValueError("The collection of labels must not contain duplicates!")
+                    if len(labels) != len(neurons):
+                        raise ValueError("The length of labels and neurons does not match!")
+                    else:
+                        for n_label, neuron in zip(labels, neurons):
+                            self.__neurons[n_label] = neuron
                 else:
-                    for n_label, neuron in zip(labels, neurons):
-                        self.__neurons[n_label] = neuron
-            else:
-                labels = {self.__random_label() for _ in neurons}
-                for n_label, neuron in zip(labels, neurons):
-                    self.__neurons[n_label] = neuron
-        self.weights = weights if weights else self.generate_weights()
+                    for neuron in neurons:
+                        self.__neurons[self.__random_label()] = neuron
+            self.weights = weights if weights else self.generate_weights()
+        else:
+            self.__neurons = dict()
         return
-
-    def __post_init__(self) -> None:
-        """Generate the default randomized values of the weights and count the total number of neurons in the network."""
-        if 0 < len(self.neurons):
-            self._total_neurons = len(self.neurons)
-            self.labels = {f"n_{x}" for x in range(self.total_neurons)}
-            self.generate_weights()
-            return
 
     def __repr__(self) -> str:
         """Present the Izhikevich network in the console with its total neurons."""

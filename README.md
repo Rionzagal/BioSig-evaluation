@@ -25,8 +25,6 @@ This module focuses on generating a model in which the user can use the Izhikevi
 
 ## Installation
 In order to install and make use of this package, just enter `python -m pip install med-signal` and you will be good to go! This package uses various dependencies for its optimal functions. These requirements are listed in the [section below](#package-requirements).
-
-### Package Requirements
 In order to successfuly use this package, a set of requirements are needed for its usage. These requirements will be automatically installed or upgraded *(if you already have one of the dependencies)* as the package is installed. The minimum python version needed to correctly use this package is `python 3.10`.
 
 The following list provides the required packages with their minimal required version needed to install **MedSig**.

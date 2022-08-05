@@ -33,3 +33,4 @@ venv
 /.tox
 *.html
 .coverage
+/htmlcov
