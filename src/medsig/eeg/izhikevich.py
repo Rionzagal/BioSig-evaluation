@@ -1,5 +1,4 @@
 from __future__ import annotations
-from collections.abc import Collection
 from dataclasses import dataclass, field
 from string import ascii_letters, digits
 from random import choice as rand_choice
@@ -427,7 +426,7 @@ class Network:
         self.__exc_inp = float(value)
         return
 
-    def add_neurons(self, data: Neuron | dict[str, Neuron] | Collection[Neuron], labels: str | set[str] | None = None) -> None:
+    def add_neurons(self, data: Neuron | dict[str, Neuron] | list[Neuron], labels: str | set[str] | None = None) -> None:
         """Append a Neuron or a collection of Neuron objects to the Neuron objects collection in the current Network object.
 
         Append a Neuron or a collection of Neuron objects to the evaluated Neuron objects in the current Network. Input a single
@@ -437,41 +436,47 @@ class Network:
         of randomized weights is generated to match the new collection of Neurons and labels.
 
         Arguments:
-            data(Neuron | dict[str, Neuron] | Collection[Neuron]): The Neuron(s) to be added to the Network and be evaluated among the
+            data(Neuron | dict[str, Neuron] | list[Neuron]): The Neuron(s) to be added to the Network and be evaluated among the
                 existent collection of Neurons.
             labels(str | set[str]): The labels assigned to each Neuron entry in the parameter 'data'.
-
+            *NOTE*: If a dict[str, Neuron] is passed as data and labels is also passed as a parameter, the labels passed as parameters
+                    will be overriden by the dictionary keys provided as data.
         Raises:
             TypeError: When any of the argument values contain invalid dataTypes.
             ValueError: When the quantities of Neurons and labels do not match with each other.
             ValueError: When a given label is already existent in the Network."""
         if isinstance(data, Neuron):
+            # When a single Neuron is passed as an argument.
             new_label = ""
-            if labels:
-                if not isinstance(labels, str):
+            match labels:
+                case _ if labels is None:
+                    new_label = self.__random_label()
+                case _ if not isinstance(labels, str):
                     raise TypeError("When a single neuron is given, the label must be of tipe str!")
-                elif labels in self.__neurons.keys():
+                case _ if labels in set(self.neurons.keys()):
                     raise ValueError("The given label is already in the Network!")
-                else:
+                case _:
                     new_label = str(labels)
-            else:
-                new_label = self.__random_label()
             self.__neurons[new_label] = data
-        elif (isinstance(data, Collection) or issubclass(data, Collection)) and not isinstance(data, dict):
-            new_labels = set()
-            if labels:
-                if not isinstance(labels, set):
+        elif isinstance(data, list):
+            # When a list of Neurons is passed as an argument.
+            match labels:
+                case None:
+                    for neuron in data:
+                        self.__neurons[self.__random_label()] = neuron
+                case _ if not isinstance(labels, set):
                     raise TypeError("When multiple neurons are given, the labels must be given in a set!")
-                elif len(labels) != len(data):
+                case _ if len(labels) != len(data):
                     raise ValueError("The number of labels must match the number of neurons!")
-                for n_label in labels:
-                    if n_label in self.__neurons.keys():
-                        raise ValueError(f"The label {n_label} is already present in the Network!")
-                new_labels = labels
-            else:
-                new_labels = {self.__random_label() for _ in data}
-            self.__neurons.update({n_label: n for n_label, n in zip(new_labels, data)})
+                case _:
+                    for label in labels:
+                        if not isinstance(label, str):
+                            raise TypeError("All of the provided labels must be of class *str*!")
+                        if label in set(self.neurons.keys()):
+                            raise ValueError(f"The label *{label}* is already present in the Network!")
+                    self.__neurons.update({n_label: n for n_label, n in zip(labels, data)})
         elif isinstance(data, dict):
+            # When a dict of [str: Neuron] is passed as an argument.
             for label in data.keys():
                 if not isinstance(label, str):
                     raise TypeError(f"The label {label} must be a value of type str!")
@@ -479,6 +484,7 @@ class Network:
                     raise ValueError(f"The label {label} is already present in the Network!")
             self.__neurons.update(data)
         else:
+            # When an invalid type of argument is passed.
             raise TypeError("The given data must be of type Neuron, a dictionary of labeled neurons or a collection of Neurons!")
         self.generate_weights()
         return
@@ -612,20 +618,18 @@ class Network:
         return self.total_neurons
 
     def __add__(self, other: Network) -> Network:
-        result: Network = Network()
-        if isinstance(other, Network):
-            result.thalamic_ex = (self.thalamic_ex + other.thalamic_ex)/2
-            result.thalamic_in = (self.thalamic_in + other.thalamic_in)/2
-            total_neurons = self.neurons
+        if not isinstance(other, Network):
+            raise TypeError("A Network can only operate directly with another Network!")
+        else:
+            th_ex = (self.thalamic_ex + other.thalamic_ex)/2
+            th_in = (self.thalamic_in + other.thalamic_in)/2
+            total_neurons = {key: value for key, value in self.__neurons.items()}
             for n_label, neuron in other.neurons.items():
                 new_label = n_label if n_label not in total_neurons.keys() else f"{n_label}_1"
                 total_neurons[new_label] = neuron
-            result.neurons = total_neurons
-        else:
-            raise TypeError("A Network can only operate directly with another Network!")
-        return result
+            return Network(total_neurons, exc_inp=th_ex, inh_inp=th_in)
 
-    def __iadd__(self, other: Network) -> None:
+    def __iadd__(self, other: Network) -> Network:
         if isinstance(other, Network):
             self.thalamic_ex = (self.thalamic_ex + other.thalamic_ex)/2
             self.thalamic_in = (self.thalamic_in + other.thalamic_in)/2
@@ -636,7 +640,7 @@ class Network:
             self.neurons = total_neurons
         else:
             raise TypeError("A Network can only operate directly with another Network!")
-        return
+        return self
 
     def __sub__(self, other: Network) -> Network:
         result = Network()

@@ -1,3 +1,4 @@
+from typing_extensions import assert_type
 from pandas import DataFrame
 from medsig.eeg.izhikevich import Network, Neuron, NeuronTypes
 from numpy import float16, linspace, random
@@ -284,4 +285,173 @@ def test_setting_valid_existing_weights(qty) -> None:
     valid_weights = DataFrame(random.rand(qty, qty))
     net.weights = valid_weights
     assert (net.total_neurons, net.total_neurons) == valid_weights.shape
+    return
+
+
+@pytest.mark.parametrize(["ex", "inh", "conn"],
+                         [
+    (0, .5, .4),
+    (.9, 0, .6),
+    (-1, 1, .9),
+    (1, -1, .2),
+    (1, 1, 0),
+    (1, 1, 1)
+])
+def test_invalid_generate_weigths(ex, inh, conn) -> None:
+    """Test the exception raising when invalid args are passed to generate_weigths
+    method."""
+    net = Network([Neuron() for _ in range(10)])
+    with pytest.raises(ValueError):
+        net.generate_weights(ex, inh)
+    return
+
+
+@pytest.mark.parametrize(["type_name", "qty"],
+                         [
+    ("dict", 1),
+    ("list", 5),
+    ("single", 1),
+    ("dict", 9)
+])
+def test_valid_unlabeled_add_neurons(type_name, qty) -> None:
+    """Test the add_neurons method with valid inputs without labels."""
+    net = Network([Neuron() for _ in range(5)])
+    match type_name:
+        case "dict":
+            net.add_neurons({f"ln_{x}": Neuron() for x in range(qty)})
+        case "list":
+            net.add_neurons([Neuron() for _ in range(qty)])
+        case _:
+            for _ in range(qty):
+                net.add_neurons(Neuron())
+    assert qty + 5 == net.total_neurons
+    return
+
+
+@pytest.mark.parametrize("labels",
+                         [
+                             {"hello", "one", "l-xan"},
+                             "unoDosTres",
+                             {"1", "2", "3", "cuatro", "cinco"}
+                         ])
+def test_valid_labeled_add_neurons(labels) -> None:
+    """Test the add_neurons methos with valid inputs and labels."""
+    net = Network([Neuron() for _ in range(5)])
+    if isinstance(labels, str):
+        net.add_neurons(Neuron(), labels)
+        assert 6 == net.total_neurons
+    else:
+        neurons = [Neuron() for _ in labels]
+        net.add_neurons(neurons, labels)
+        assert len(labels) + 5 == net.total_neurons
+    return
+
+
+@pytest.mark.parametrize("labels", [
+    "test",
+    {"Hello"},
+    ["a list", 2],
+    {14: "label"},
+    2
+])
+def test_invalid_labels_for_single_add_neurons(labels) -> None:
+    """Test the exception raising in the add_neurons method when invalid labels
+    are passed as parameters."""
+    net = Network({"test": Neuron()})
+    if isinstance(labels, str):
+        with pytest.raises(ValueError):
+            net.add_neurons(Neuron(), labels)
+    else:
+        with pytest.raises(TypeError):
+            net.add_neurons(Neuron(), labels)
+    return
+
+
+@pytest.mark.parametrize(["neurons", "labels", "error"],
+                         [
+    ([Neuron() for _ in range(3)], ["lab1", "lab2", "lab3"], "type"),
+    ([Neuron() for _ in range(2)], {"k", 9}, "type"),
+    ([Neuron() for _ in range(3)], {"1", "k", "h"}, "value"),
+    ([Neuron() for _ in range(2)], {"H", "k9", "13"}, "value"),
+    ({i: Neuron() for i in range(3)}, None, "type"),
+    ({f"{i}": Neuron() for i in range(2)}, None, "value"),
+    ((Neuron(-10*n) for n in range(10)), None, "type"),
+    (tuple(Neuron(-5*m) for m in (2, 4, 8)), None, "type")
+])
+def test_invalid_multiple_add_neurons(neurons, labels, error) -> None:
+    """Test the exception raising in the add_neurons method when invalid labels
+    are passed along with multiple neurons."""
+    net = Network({f"{i}": Neuron() for i in range(5)})
+    if isinstance(neurons, list):
+        match error:
+            case "type":
+                with pytest.raises(TypeError):
+                    net.add_neurons(neurons, labels)
+            case "value":
+                with pytest.raises(ValueError):
+                    net.add_neurons(neurons, labels)
+    else:
+        match error:
+            case "type":
+                with pytest.raises(TypeError):
+                    net.add_neurons(neurons)
+            case "value":
+                with pytest.raises(ValueError):
+                    net.add_neurons(neurons)
+    return
+
+
+@pytest.mark.parametrize(["T", "I", "pos"],
+                         [
+    (200, 1, 0),
+    (500, 10, 1),
+    (100, 5, 0)
+])
+def test_activate_network(T, I, pos) -> None:
+    """Test the activate method for the Network class."""
+    net = Network([Neuron() for _ in range(10)])
+    V, single_v, firings = net.activate(T, I, pos)
+    assert int(T/Neuron.tau()) == len(V)
+    assert (int(T/Neuron.tau()), net.total_neurons) == single_v.shape
+    assert net.total_neurons in firings.shape
+    return
+
+
+@pytest.mark.parametrize("other",
+                         [
+                             Network([Neuron(-10) for _ in range(20)]),
+                             Network([Neuron() for _ in range(1)]),
+                             Network([Neuron(-100) for _ in range(4)]),
+                             Neuron()
+                         ])
+def test_add_dunder(other) -> None:
+    """Test the __add__ method of the Network class."""
+    net = Network([Neuron(-5*i) for i in range(13)])
+    new_net = Network()
+    if isinstance(other, Network):
+        new_net = net + other
+        assert new_net.total_neurons == len(net) + len(other)
+    else:
+        with pytest.raises(TypeError):
+            new_net = net + other
+    return
+
+
+@pytest.mark.parametrize("other",
+                         [
+                             Network([Neuron(-10) for _ in range(20)]),
+                             Network([Neuron() for _ in range(1)]),
+                             Network([Neuron(-100) for _ in range(4)]),
+                             Neuron()
+                         ])
+def test_iadd_dunder(other) -> None:
+    """Test the implicit __add__ method of the Network class."""
+    net = Network([Neuron(-5*i) for i in range(13)])
+    if isinstance(other, Network):
+        old_t_neurons = len(net)
+        net += other
+        assert net.total_neurons == old_t_neurons + len(other)
+    else:
+        with pytest.raises(TypeError):
+            net += other
     return
