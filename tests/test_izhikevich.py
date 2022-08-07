@@ -1,4 +1,3 @@
-from typing_extensions import assert_type
 from pandas import DataFrame
 from medsig.eeg.izhikevich import Network, Neuron, NeuronTypes
 from numpy import float16, linspace, random
@@ -401,16 +400,16 @@ def test_invalid_multiple_add_neurons(neurons, labels, error) -> None:
     return
 
 
-@pytest.mark.parametrize(["T", "I", "pos"],
+@pytest.mark.parametrize(["T", "I_in", "pos"],
                          [
     (200, 1, 0),
     (500, 10, 1),
     (100, 5, 0)
 ])
-def test_activate_network(T, I, pos) -> None:
+def test_activate_network(T, I_in, pos) -> None:
     """Test the activate method for the Network class."""
     net = Network([Neuron() for _ in range(10)])
-    V, single_v, firings = net.activate(T, I, pos)
+    V, single_v, firings = net.activate(T, I_in, pos)
     assert int(T/Neuron.tau()) == len(V)
     assert (int(T/Neuron.tau()), net.total_neurons) == single_v.shape
     assert net.total_neurons in firings.shape
@@ -454,4 +453,52 @@ def test_iadd_dunder(other) -> None:
     else:
         with pytest.raises(TypeError):
             net += other
+    return
+
+
+def test_sub_dunder() -> None:
+    """Test the __sub__ method of the Network class."""
+    # Generate the left-side Network object with 20 Neurons
+    net = Network([Neuron(-10*i) for i in range(20)])
+    # Collect the left-side Network neurons in a different dict and pop 5 of them
+    net_neurons = {key: value for key, value in net.neurons.items()}
+    net_labels = list(net_neurons.keys())[:5]
+    popped_neurons = {label: net_neurons[label] for label in net_labels}
+    # Compute a new result Network from the
+    new_net = net - Network(popped_neurons)
+    assert len(new_net) == len(net) - len(net_labels)
+    net_1 = net - Network(popped_neurons, None, None, .5, .5)
+    assert len(net_1) == len(net) - len(net_labels)
+    # Test the invalid cases and exception raising
+    with pytest.raises(TypeError):
+        net - Neuron()
+    with pytest.raises(ValueError):
+        popped_neurons["invalid_label"] = Neuron()
+        net - Network(popped_neurons)
+    return
+
+
+def test_isub_dunder() -> None:
+    """Test the implicit __sub__ method of the Network class."""
+    def get_popped_neurons(net: Network, qty: int) -> dict[str, Neuron]:
+        # Collect the neurons to be subtracted from the left-side Network.
+        net_neurons = {key: value for key, value in net.neurons.items()}
+        net_labels = list(net_neurons.keys())[:qty]
+        return {label: net_neurons[label] for label in net_labels}
+    # Generate the left-side Network with 20 Neurons.
+    net = Network([Neuron(-10*i) for i in range(20)])
+    # Compute and store in the net the operation with different Networks
+    old_length = len(net)
+    net -= Network(get_popped_neurons(net, 5))
+    assert len(net) == old_length - 5
+    net = Network([Neuron(-10*i) for i in range(20)])
+    net -= Network(get_popped_neurons(net, 5), None, None, .5, .3)
+    assert len(net) == old_length - 5
+    # Test invalid operations and exception raising.
+    with pytest.raises(TypeError):
+        net -= Neuron()
+    with pytest.raises(ValueError):
+        popped_neurons = get_popped_neurons(net, 3)
+        popped_neurons["invalid_label"] = Neuron()
+        net -= Network(popped_neurons)
     return

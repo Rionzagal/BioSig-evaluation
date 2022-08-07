@@ -123,7 +123,7 @@ class NeuronTypes:
         NeuronTypes, an empty list will be returned.
 
         Arguments:
-            name(str) optional: The keyword used to filter the built-in NeuronTypes to be retrieved.
+            name (str) optional: The keyword used to filter the built-in NeuronTypes to be retrieved.
 
         Returns:
             list[NeuronTypes]: The resulting list containing the built-in NeuronTypes objects that
@@ -197,9 +197,9 @@ class Neuron:
 
     Attributes:
         neuron_type (NeuronTypes): Represents the behavior of the current Neuron object as a NeuronTypes object.
-        v0(float | int): Represents the initial voltage value in miliVolts of the current Neuron object.
-        is_excitatory(bool): Represents the activity of the current Neuron object, wether it is excitatory or inhibitory.
-        tau(float) [global]: Represents the time-step in miliseconds present between each step of the response vector.
+        v0 (float | int): Represents the initial voltage value in miliVolts of the current Neuron object.
+        is_excitatory (bool): Represents the activity of the current Neuron object, wether it is excitatory or inhibitory.
+        tau (float) [global]: Represents the time-step in miliseconds present between each step of the response vector.
             To assign a new value for tau, use the set_tau() method.
         average_white_noise: Represents the average white noise to be added to each point of the response vector.
     """
@@ -279,7 +279,7 @@ class Neuron:
 
         Returns:
             tuple[float]: The next iterations of the response voltage and the supporting value with the structure (V, u).
-                V(float) -> The next response voltage iteration of the Neuron evaluated in mV.
+                V (float) -> The next response voltage iteration of the Neuron evaluated in mV.
                 u (float) -> The next supporting value iteration for the support Izhikevich equation."""
         if 30 <= V:
             V = float(self.neuron_type.c)
@@ -423,7 +423,7 @@ class Network:
     def thalamic_in(self, value: float) -> None:
         if 0. >= value:
             raise ValueError("The inhibition input value must be a positive number greater than 0!")
-        self.__exc_inp = float(value)
+        self.__inh_inp = float(value)
         return
 
     def add_neurons(self, data: Neuron | dict[str, Neuron] | list[Neuron], labels: str | set[str] | None = None) -> None:
@@ -579,7 +579,7 @@ class Network:
             exc_inp: float | None = None, inh_inp: float | None = None
     ) -> None:
         self.thalamic_ex = exc_inp if exc_inp else self.__exc_inp
-        self.thalamic_in = inh_inp if inh_inp else self.__exc_inp
+        self.thalamic_in = inh_inp if inh_inp else self.__inh_inp
         if neurons:
             print(f"The input length is {len(neurons)}")
             if isinstance(neurons, dict):
@@ -643,25 +643,43 @@ class Network:
         return self
 
     def __sub__(self, other: Network) -> Network:
-        result = Network()
-        if isinstance(other, Network):
-            result.thalamic_ex = abs(self.thalamic_ex - other.thalamic_ex)*2
-            result.thalamic_in = abs(self.thalamic_in - other.thalamic_in)*2
-            for n_label, i_neuron in other.neurons.items():
-                if n_label in self.neurons and i_neuron == self.neurons[n_label]:
-                    self.neurons.pop(n_label)
-            result.neurons = self.neurons
-        else:
+        if not isinstance(other, Network):
             raise TypeError("A Network can only operate directly with another Network!")
-        return result
+        else:
+            th_ex: float = 0.  # Compute the thalamic excitation input.
+            if self.thalamic_ex == other.thalamic_ex:
+                th_ex = self.thalamic_ex / 2
+            else:
+                th_ex = abs(self.thalamic_ex - other.thalamic_ex)
+            th_in: float = 0.  # Compute the thalamic inhibition input.
+            if self.thalamic_in == other.thalamic_in:
+                th_in = self.thalamic_in / 2
+            else:
+                th_in = abs(self.thalamic_in - other.thalamic_in)
+            # Collect the neurons of the Major Network and pop the neurons of the Lesser Network.
+            total_neurons = {key: value for key, value in self.neurons.items()}
+            for n_label, i_neuron in other.neurons.items():
+                if n_label in self.neurons.keys() and i_neuron == self.neurons[n_label]:
+                    total_neurons.pop(n_label)
+                else:
+                    raise ValueError(f"The Neuron {n_label} was not found in the left side Network!")
+        return Network(total_neurons, None, None, th_ex, th_in)
 
-    def __isub__(self, other: Network) -> None:
+    def __isub__(self, other: Network) -> Network:
         if isinstance(other, Network):
-            self.thalamic_ex = abs(self.thalamic_ex - other.thalamic_ex)*2
-            self.thalamic_in = abs(self.thalamic_in - other.thalamic_in)*2
+            if self.thalamic_ex == other.thalamic_ex:
+                self.thalamic_ex = self.thalamic_ex / 2
+            else:
+                self.thalamic_ex = abs(self.thalamic_ex - other.thalamic_ex)
+            if self.thalamic_in == other.thalamic_in:
+                self.thalamic_in = self.thalamic_in / 2
+            else:
+                self.thalamic_in = abs(self.thalamic_in - other.thalamic_in)
             for n_label, i_neuron in other.neurons.items():
-                if n_label in self.neurons and i_neuron == self.neurons[n_label]:
-                    self.neurons.pop(n_label)
+                if n_label in self.neurons.keys() and i_neuron == self.neurons[n_label]:
+                    self.__neurons.pop(n_label)
+                else:
+                    raise ValueError(f"The Neuron {n_label} was not found in the left side Network!")
         else:
             raise TypeError("A Network can only operate directly with another Network!")
-        return
+        return self
