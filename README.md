@@ -14,7 +14,11 @@ This module focuses on the simulation and specific processing of known biologica
     - [Package Requirements](#package-requirements)
 
 ## EEG module
-This module contains the necesary actions for the processing and evaluation of *EEG* signals contained in a **numpy** array. The main functionality of this module is to let the user process analyze and generate simulations of *EEG* signals in a single package.
+This module contains the necesary actions for the processing and evaluation of *EEG* signals contained in a **numpy** array. The main functionality of this module is to let the user process analyze and generate simulations of *EEG* signals in a single package. This module implements actions such as:
+
+- Read and store the signal found from a valid _.txt_, _.csv_ file containing the signal.
+- Calculate the main frequencies and relevant information from the signal.
+- Retrieve the relevant information and calculate the wave type based on Polar Statistics.
 
 ### Izhikevich simulation module
 This module focuses on generating a model in which the user can use the Izhikevich neurons and visualize their behavior either as a **single unit** or as a **network of multiple units**. The simulation includes settings such as input value, neuron positions and *Field Voltage Response*, as well as *Single Voltage Response*. The functionality of this module is based in three data-classes functioning as models to describe the neural response based on the **Izhikevich Equations** for neural response. The classes are listed as follow:
