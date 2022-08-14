@@ -22,6 +22,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+VERSION
 
 # environment and editor cache files
 .vscode
@@ -33,4 +34,4 @@ venv
 /.tox
 *.html
 .coverage
-/htmlcov
+htmlcov
