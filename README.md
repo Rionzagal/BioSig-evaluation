@@ -1,4 +1,5 @@
 [![Tests](https://github.com/Rionzagal/MedSig/actions/workflows/tests.yml/badge.svg)](https://github.com/Rionzagal/MedSig/actions)
+[![Publish](https://github.com/Rionzagal/Med-Signal/actions/workflows/publish.yml/badge.svg)](https://github.com/Rionzagal/Med-Signal/actions/workflows/publish.yml)
 [![Issues](https://img.shields.io/github/issues/Rionzagal/MedSig)](https://github.com/Rionzagal/MedSig/issues)
 [![License](https://img.shields.io/github/license/Rionzagal/MedSig)](./LICENSE)
 
