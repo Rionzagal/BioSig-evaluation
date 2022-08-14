@@ -1,6 +1,4 @@
 import os
-import importlib.metadata
-from medsig.analysis import get_main_frequency
 
 
 def string():
@@ -12,6 +10,3 @@ def string():
     except Exception as ex:
         result = str(ex)
     return result
-
-
-__version__ = importlib.metadata.version('med-signal')
