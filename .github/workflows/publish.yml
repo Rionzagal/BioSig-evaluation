@@ -1,4 +1,4 @@
-name: Publish
+name: Test and Publish
 
 on:
   workflow_dispatch:
@@ -8,11 +8,8 @@ on:
     branches:
       - main
 
-env:
-  PROJECT_NAME: med-signal
-
 jobs:
-  test:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -31,12 +28,7 @@ jobs:
           pip install tox tox-gh-actions
       - name: Test with tox
         run: tox
-
-  publish:
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'release'
-    steps:
+      
       - name: Install distribution dependencies
         run: pip install --upgrade twine setuptools wheel
       
@@ -50,6 +42,11 @@ jobs:
           path: dist
         if: matrix.python-version == 3.10
 
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'release'
+    steps:
       - name: Download a distribution artifact
         uses: actions/download-artifact@v2
         with:
