@@ -51,17 +51,33 @@ def test_recover_not_found_neuron_type() -> None:
     ("", 20)
 ])
 def test_recover_multiple_types_by_name(input_name, expected_length) -> None:
-    """
-    Test the NeuronTypes.get_by_name() method with different keywords and the expected lengths of
-    the resulting lists.
-    """
+    '''This function tests the get_range function in the NeuronTypes class
+    
+    Parameters
+    ----------
+    input_name
+        The name of the neuron type you want to recover.
+    expected_length
+        The number of results you expect to get back.
+    
+    Returns
+    -------
+        A list of NeuronTypes
+    
+    '''
     test_results = NeuronTypes.get_range(input_name)
     assert len(test_results) == expected_length
     return
 
 
 def test_generate_custom_type() -> None:
-    """Test the NeuronTypes() constructor using custom values"""
+    '''This function tests the custom type NeuronTypes
+    
+    Returns
+    -------
+        the value of the boolean expression.
+    
+    '''
     test_type = NeuronTypes("My custom value", 1, 2, 3, 4)
     assert bool(test_type)
     return

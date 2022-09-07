@@ -12,7 +12,7 @@ This module focuses on the simulation and specific processing of known biologica
   - [EEG module](#eeg-module)
     - [Izhikevich simulation module](#izhikevich-simulation-module)
   - [Installation](#installation)
-    - [Package Requirements](#package-requirements)
+  - [Visualizations](#visualizations)
 
 ## EEG module
 This module contains the necesary actions for the processing and evaluation of *EEG* signals contained in a **numpy** array. The main functionality of this module is to let the user process analyze and generate simulations of *EEG* signals in a single package. This module implements actions such as:
@@ -37,3 +37,6 @@ The following list provides the required packages with their minimal required ve
 - Matplotlib - *3.5.1*
 - Scipy - *1.8.0*
 - Numpy - *1.22.3*
+
+## Visualizations
+A visualizations Jupyter notebook is found at the root of this project in order to see for yourself the results and usage of this package. You can follow this [link](visualizations.ipynb) to check the file and play with the usage of the functions and their explanations.
